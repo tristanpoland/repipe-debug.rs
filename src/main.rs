@@ -8,10 +8,12 @@ use tempfile::NamedTempFile;
 use walkdir::WalkDir;
 use std::collections::HashMap;
 
+// Escapes special characters in a string for use in regular expressions
 fn escape_for_regex(s: &str) -> String {
     regex::escape(s).replace(" ", r"\s+")
 }
 
+// Safely executes a shell command and returns stdout, exit status, and stderr
 fn safe_execute(cmd: &str) -> io::Result<(String, i32, String)> {
     let output = Command::new("sh")
         .arg("-c")
@@ -25,6 +27,7 @@ fn safe_execute(cmd: &str) -> io::Result<(String, i32, String)> {
     Ok((stdout, exit_status, stderr))
 }
 
+// Resolves various types of placeholders in a given line
 fn resolve_placeholders(line: &str, merged_temp_file: &str) -> String {
     let mut resolved_line = line.to_string();
 
@@ -63,6 +66,7 @@ fn resolve_placeholders(line: &str, merged_temp_file: &str) -> String {
     resolved_line
 }
 
+// Finds the line number of a key-value pair in a YAML file, considering the hierarchical structure
 fn find_hierarchical_line_number(file: &str, key: &str, value: &str) -> io::Result<usize> {
     let file = File::open(file)?;
     let reader = BufReader::new(file);
@@ -91,8 +95,10 @@ fn find_hierarchical_line_number(file: &str, key: &str, value: &str) -> io::Resu
     Ok(found_line)
 }
 
+// Performs Spruce merge and adds blame information to the merged output
 fn spruce_merge_with_blame(output_file: &str, files: &[String]) -> io::Result<()> {
     println!("Performing Spruce merge...");
+    // Execute Spruce merge command
     let spruce_cmd = format!("spruce merge --skip-eval {}", files.join(" "));
     let (spruce_output, spruce_exit, spruce_error) = safe_execute(&spruce_cmd)?;
     if spruce_exit != 0 {
@@ -110,12 +116,14 @@ fn spruce_merge_with_blame(output_file: &str, files: &[String]) -> io::Result<()
         file_contents.insert(file.clone(), fs::read_to_string(file)?.lines().map(String::from).collect());
     }
 
+    // Process each line of the merged output
     for line in spruce_output.lines() {
         if line.trim().starts_with('#') || line.trim().is_empty() {
             writeln!(out_file, "{}", line)?;
             continue;
         }
 
+        // Resolve placeholders in the line
         let resolved_line = resolve_placeholders(line, &spruce_output);
 
         if let Some((indent, content)) = resolved_line.split_once(|c: char| !c.is_whitespace()) {
@@ -123,6 +131,7 @@ fn spruce_merge_with_blame(output_file: &str, files: &[String]) -> io::Result<()
                 let value = value.trim();
                 let mut found = false;
 
+                // Try to find the origin of the line in input files
                 for (file, contents) in &file_contents {
                     if let Some((line_number, _)) = contents.iter().enumerate()
                         .find(|(_, l)| l.contains(key) && l.contains(value)) {
@@ -150,20 +159,24 @@ fn spruce_merge_with_blame(output_file: &str, files: &[String]) -> io::Result<()
 }
 
 fn main() -> io::Result<()> {
+    // Parse command-line arguments
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         eprintln!("Usage: {} <output_merged.yml>", args[0]);
         std::process::exit(1);
     }
 
+    // Set the current working directory
     let base_dir = env::current_dir()?;
     env::set_current_dir(&base_dir)?;
 
+    // Collect input files for merging
     let mut input_files = vec![
         "pipeline/base.yml".to_string(),
         "settings.yml".to_string(),
     ];
 
+    // Recursively find all .yml files in the pipeline directory
     for entry in WalkDir::new("pipeline") {
         let entry = entry?;
         let path = entry.path();
@@ -178,6 +191,7 @@ fn main() -> io::Result<()> {
     let merged_file = &args[1];
 
     println!("Merging input files using Spruce and tracking blame...");
+    // Perform Spruce merge with blame information
     spruce_merge_with_blame(merged_file, &input_files)?;
 
     println!("Merged file with blame information has been saved to: {}", merged_file);
