@@ -4,7 +4,7 @@
 
 This Rust script performs a Spruce merge operation on YAML files, adding blame information to track the origin of each line in the merged output. It's designed to work with a specific directory structure and file naming convention.
 
-![image](https://github.com/user-attachments/assets/18c5edea-28dc-4c31-9d4b-ef171b33ed0e)
+![image](https://github.com/user-attachments/assets/cea79ffa-9556-4dae-ae47-82756522e9db)
 
 ## Dependencies
 
