@@ -1,0 +1,9 @@
+[package]
+name = "repipe-debug"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+regex = "1.10.6"
+tempfile = "3.12.0"
+walkdir = "2.5.0"
