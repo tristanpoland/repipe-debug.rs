@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Rust script performs a Spruce merge operation on YAML files, adding blame information to track the origin of each line in the merged output. It's designed to work with a specific directory structure and file naming convention.
+This Rust script performs a Spruce merge operation on YAML files, adding blame information to track the origin of each line in the merged output. It's designed to work with a specific directory structure and file naming convention for genesis kits.
 
 ![image](https://github.com/user-attachments/assets/cea79ffa-9556-4dae-ae47-82756522e9db)
 
